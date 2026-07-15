@@ -31,7 +31,6 @@ A nightly toolchain is required: `-Z checksum-freshness` is nightly-only. On sta
 | name | description |
 |---|---|
 | `cache-hit` | Whether a cache tag mounted |
-| `resolved-tag` | The tag that mounted |
 
 ## Cache keys
 
