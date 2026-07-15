@@ -1,8 +1,10 @@
-# Clipper Rust Incremental Cache
+# Incremental Rust builds for GitHub Actions
 
 <!-- PLACEHOLDER(kyle): pitch + measured numbers -->
 
-Caches the cargo `target/` directory as a clipper volume and enables incremental compilation with content-hash freshness, so warm runs rebuild only what changed.
+Caches the cargo `target/` directory as a clipper volume and enables incremental compilation with content-hash freshness, so warm runs rebuild only what changed. Generally, expect an XX% improvement in compile times over sccache (workflow depdendent).
+
+Please see the [main README](../README.md) for more information.
 
 ## Usage
 
