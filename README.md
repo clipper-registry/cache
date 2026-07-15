@@ -4,14 +4,6 @@ An action to cache directories with [Clipper](https://clipper.dev). Directories 
 
 ## Usage
 
-**A Clipper account is required to use this action.**
-
-**This action is currently Linux only, support for MacOS and Windows coming soon**
-
-1. Create an account at https://clipper.dev/login
-2. Go to https://clipper.dev/repositories/tokens to generate a token with push, pull, and create scopes.
-3. Add the token to your repo or org
-4. Add the action to your workflow, like so:
 ```yaml
 - uses: clipper-registry/cache@main
   env:
@@ -24,6 +16,17 @@ An action to cache directories with [Clipper](https://clipper.dev). Directories 
 
 - **Mount**: the branch is appended to `key` automatically, so `<key>-<branch>` is tried first, then `<key>-<base>` (the PR's base branch, or the repository default branch). If nothing resolves, the job runs cold on a plain directory.
 - **Push**: on job success, changes are pushed to `<key>-<branch>`. To also push when the job fails, set `CLIPPER_CACHE_ON_FAILURE: "true"` in the job env.
+
+> [!NOTE]
+> Linux runners only for now; macOS and Windows support coming soon.
+
+### Setup
+
+A Clipper account is required to use this action.
+
+1. Create an account at https://clipper.dev/login
+2. Go to https://clipper.dev/repositories/tokens to generate a token with push, pull, and create scopes.
+3. Add the token to your repo or org
 
 ### Inputs
 
