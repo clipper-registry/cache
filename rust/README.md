@@ -6,6 +6,23 @@ Caches the cargo `target/` directory as a clipper volume and enables incremental
 
 ## Usage
 
+**A Clipper account is required to use this action.**
+
+**This action is currently Linux only, support for MacOS and Windows coming soon**
+
+1. Create an account at https://clipper.dev/login
+2. Go to https://clipper.dev/repositories/tokens to generate a token with push, pull, and create scopes.
+3. Add the token to your repo or org
+4. Install a nightly toolchain in the job. `-Z checksum-freshness` is nightly-only; on stable it is ignored and every fresh checkout rebuilds the full workspace.
+
+```yaml
+- uses: dtolnay/rust-toolchain@nightly
+```
+
+   If the repository's `rust-toolchain.toml` pins stable, also set `RUSTUP_TOOLCHAIN: nightly` in the job env, since the toolchain file overrides the default.
+
+5. Add the action to your workflow before your build steps, like so:
+
 ```yaml
 - uses: clipper-registry/cache/rust@main
   env:
@@ -14,8 +31,6 @@ Caches the cargo `target/` directory as a clipper volume and enables incremental
     repo: clipper.dev/myorg/ci-cache
     key: test-${{ matrix.arch }}
 ```
-
-A nightly toolchain is required: `-Z checksum-freshness` is nightly-only. On stable it is ignored and every fresh checkout rebuilds the full workspace. If the repository's `rust-toolchain.toml` pins stable, set `RUSTUP_TOOLCHAIN` in the job env.
 
 ## Inputs
 
