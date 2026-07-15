@@ -16,6 +16,10 @@ inputs:
     description: Branch whose tags are the warm fallback for other branches.
     required: false
     default: main
+  split-glob:
+    description: Extra split globs (one per line) on top of the generated cargo set.
+    required: false
+    default: ""
   version:
     description: Clipper version to install; latest by default.
     required: false
@@ -56,6 +60,7 @@ runs:
         repo: ${{ inputs.repo }}
         key: ${{ steps.cfg.outputs.key }}
         restore-keys: ${{ steps.cfg.outputs.restore }}
+        split-glob: ${{ inputs.split-glob }}
         cdc: "true"
         version: ${{ inputs.version }}
 
