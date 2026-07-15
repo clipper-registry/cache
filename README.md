@@ -22,17 +22,17 @@ Rather than using tarballs (such as traditional Docker layers and GitHub actions
 ---
 title: "Clipper"
 config:
-  themeCSS: ".nodeLabel, .nodeLabel p { text-align: left; white-space: pre-wrap; }"
+  themeCSS: ".nodeLabel, .nodeLabel p { text-align: left; }"
 ---
 flowchart LR
   DATA["`**application/vnd.oci.image.layer.toc.v1+json**
 {
-  &quot;version&quot;: 1,
-  &quot;entries&quot;: [
-    { &quot;type&quot;: &quot;reg&quot;, &quot;name&quot;: &quot;libtorch_cuda.so&quot;, &quot;size&quot;: 580553696, &quot;modtime&quot;: &quot;2026-06-29T22:08:57Z&quot;, &quot;digest&quot;: &quot;sha256:9f2c1a…&quot; },
-    { &quot;type&quot;: &quot;reg&quot;, &quot;name&quot;: &quot;libcublas.so.12&quot;, &quot;size&quot;: 561997520, &quot;modtime&quot;: &quot;2026-06-29T22:08:58Z&quot;, &quot;digest&quot;: &quot;sha256:c3d4b8…&quot; },
-    { &quot;type&quot;: &quot;reg&quot;, &quot;name&quot;: &quot;libnccl.so.2&quot;, &quot;size&quot;: 406431312, &quot;modtime&quot;: &quot;2026-06-29T22:08:59Z&quot;, &quot;digest&quot;: &quot;sha256:e5f6a2…&quot; }
-  ]
+&nbsp;&nbsp;&quot;version&quot;: 1,
+&nbsp;&nbsp;&quot;entries&quot;: [
+&nbsp;&nbsp;&nbsp;&nbsp;{ &quot;type&quot;: &quot;reg&quot;, &quot;name&quot;: &quot;libtorch_cuda.so&quot;, &quot;size&quot;: 580553696, &quot;modtime&quot;: &quot;2026-06-29T22:08:57Z&quot;, &quot;digest&quot;: &quot;sha256:9f2c1a…&quot; },
+&nbsp;&nbsp;&nbsp;&nbsp;{ &quot;type&quot;: &quot;reg&quot;, &quot;name&quot;: &quot;libcublas.so.12&quot;, &quot;size&quot;: 561997520, &quot;modtime&quot;: &quot;2026-06-29T22:08:58Z&quot;, &quot;digest&quot;: &quot;sha256:c3d4b8…&quot; },
+&nbsp;&nbsp;&nbsp;&nbsp;{ &quot;type&quot;: &quot;reg&quot;, &quot;name&quot;: &quot;libnccl.so.2&quot;, &quot;size&quot;: 406431312, &quot;modtime&quot;: &quot;2026-06-29T22:08:59Z&quot;, &quot;digest&quot;: &quot;sha256:e5f6a2…&quot; }
+&nbsp;&nbsp;]
 }`"]
   C2["`**application/vnd.clipper.image.layer.chunk.v1**
 sha256:9f2c1a…
