@@ -2,7 +2,9 @@
 
 <!-- PLACEHOLDER(kyle): pitch + measured numbers -->
 
-Caches `target/` between CI runs so cargo only rebuilds what actually changed. One step: enables incremental compilation with content-hash freshness, mounts `target/` as a clipper volume, and pushes the changes back when the job succeeds.
+Caches the cargo `target/` directory as a clipper volume and enables incremental compilation with content-hash freshness, so warm runs rebuild only what changed.
+
+## Usage
 
 ```yaml
 - uses: clipper-registry/cache/rust@main
@@ -13,11 +15,32 @@ Caches `target/` between CI runs so cargo only rebuilds what actually changed. O
     key: test-${{ matrix.arch }}
 ```
 
-Each branch gets its own cache (`<key>-<branch>`), starting from the `base-branch` cache (default `main`) when the branch is new.
+A nightly toolchain is required: `-Z checksum-freshness` is nightly-only. On stable it is ignored and every fresh checkout rebuilds the full workspace. If the repository's `rust-toolchain.toml` pins stable, set `RUSTUP_TOOLCHAIN` in the job env.
 
-## Requirements
+## Inputs
 
-- **Nightly toolchain.** Content-hash freshness (`-Z checksum-freshness`) is nightly-only cargo; on stable it is silently ignored and every fresh checkout rebuilds the whole workspace. If your repo's `rust-toolchain.toml` pins stable, set `RUSTUP_TOOLCHAIN` in the job env.
-- **Build scripts can defeat the cache.** Cargo re-runs build scripts by mtime, so a script with `rerun-if-changed` paths (or no `rerun-if` directives at all) re-runs on every fresh checkout and rebuilds its crate and everything depending on it. Where possible, declare build script inputs with `rerun-if-env-changed`. <!-- PLACEHOLDER(kyle): link to the build-script writeup / upstream cargo issue once filed. -->
+| name | default | description |
+|---|---|---|
+| `repo` | | Registry repository holding the cache tags |
+| `key` | | Cache key, typically the job name plus architecture |
+| `base-branch` | `main` | Branch whose cache seeds new branches |
+| `version` | `latest` | clipper CLI version to install |
 
-The preset sets `CARGO_INCREMENTAL=1` and `CARGO_UNSTABLE_CHECKSUM_FRESHNESS=true` and nothing else. Your profile settings (LTO, codegen-units, opt-level) are untouched.
+## Outputs
+
+| name | description |
+|---|---|
+| `cache-hit` | Whether a cache tag mounted |
+| `resolved-tag` | The tag that mounted |
+
+## Cache keys
+
+Each branch reads and writes `<key>-<branch>`. A branch with no cache yet starts from `<key>-<base-branch>`. The cache is pushed when the job succeeds; set `CLIPPER_CACHE_ON_FAILURE: "true"` in the job env to also push on failure.
+
+## Environment variables
+
+This action sets `CARGO_INCREMENTAL=1` and `CARGO_UNSTABLE_CHECKSUM_FRESHNESS=true` for subsequent steps. Cargo profiles are not modified.
+
+## Known issues
+
+- Build scripts are re-run based on file mtimes, which a fresh checkout always invalidates. A build script with `rerun-if-changed` paths, or with no `rerun-if` directives at all, re-runs every workflow run and rebuilds its crate and its dependents. Prefer `rerun-if-env-changed` where possible. <!-- PLACEHOLDER(kyle): link to the build-script writeup / upstream cargo issue once filed. -->
