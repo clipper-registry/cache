@@ -13,10 +13,13 @@ Caches the cargo `target/` directory as a clipper volume and enables incremental
 1. Create an account at https://clipper.dev/login
 2. Go to https://clipper.dev/repositories/tokens to generate a token with push, pull, and create scopes.
 3. Add the token to your repo or org
-4. Install a nightly toolchain in the job. `-Z checksum-freshness` is nightly-only; on stable it is ignored and every fresh checkout rebuilds the full workspace.
+4. Install a nightly toolchain, however you normally do (rustup is preinstalled on GitHub runners). `-Z checksum-freshness` is nightly-only; on stable it is ignored and every fresh checkout rebuilds the full workspace. For example:
 
 ```yaml
-- uses: dtolnay/rust-toolchain@nightly
+- uses: actions-rust-lang/setup-rust-toolchain@v1
+  with:
+    toolchain: nightly
+    cache: false # setup-rust-toolchain's built-in cache would fight this action over target/
 ```
 
    If the repository's `rust-toolchain.toml` pins stable, also set `RUSTUP_TOOLCHAIN: nightly` in the job env, since the toolchain file overrides the default.
