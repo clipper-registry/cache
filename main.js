@@ -29,20 +29,38 @@ function install(version) {
   execFileSync("clipper", ["version"], { stdio: "inherit" });
 }
 
+// Branch names may contain characters registry tags cannot (slashes).
+const sanitize = (ref) => ref.replaceAll("/", "-");
+
+// Fallback lineage: the input override, else the PR's base branch, else the
+// repository default branch from the event payload.
+function baseBranch() {
+  const override = input("base-branch");
+  if (override) return override;
+  if (process.env.GITHUB_BASE_REF) return process.env.GITHUB_BASE_REF;
+  try {
+    const event = JSON.parse(fs.readFileSync(process.env.GITHUB_EVENT_PATH, "utf8"));
+    return event.repository?.default_branch ?? "";
+  } catch {
+    return "";
+  }
+}
+
 function main() {
   const path = input("path");
   const repo = input("repo");
   const key = input("key");
   if (!path || !repo || !key) throw new Error("path, repo, and key are required");
   const jobs = input("jobs", "16");
-  const restoreKeys = input("restore-keys")
-    .split("\n")
-    .map((s) => s.trim())
-    .filter(Boolean);
 
   install(input("version", "latest"));
 
-  const tags = [key, ...restoreKeys].map((k) => `${repo}:${k}`);
+  const branch = sanitize(process.env.GITHUB_HEAD_REF || process.env.GITHUB_REF_NAME || "");
+  const pushKey = `${key}-${branch}`;
+  const keys = [pushKey];
+  const base = sanitize(baseBranch());
+  if (base && base !== branch) keys.push(`${key}-${base}`);
+  const tags = keys.map((k) => `${repo}:${k}`);
   fs.mkdirSync(path, { recursive: true });
   try {
     execFileSync("clipper", ["volume", "mount", path, "-j", jobs, ...tags], {
@@ -51,14 +69,14 @@ function main() {
     output("cache-hit", "true");
   } catch {
     // No tag exists yet: cold start on a plain directory; the post push
-    // seeds repo:key so the next run mounts warm.
+    // seeds the branch tag so the next run mounts warm.
     output("cache-hit", "false");
-    console.log(`no cache tag found; cold start (push will seed ${repo}:${key})`);
+    console.log(`no cache tag found; cold start (push will seed ${repo}:${pushKey})`);
   }
-  output("push-tag", `${repo}:${key}`);
+  output("push-tag", `${repo}:${pushKey}`);
 
   state("CACHE_PATH", path);
-  state("PUSH_TAG", `${repo}:${key}`);
+  state("PUSH_TAG", `${repo}:${pushKey}`);
   state("JOBS", jobs);
   state("CDC", input("cdc", "true"));
   state("SPLIT_GLOBS", JSON.stringify(input("split-glob").split("\n").map((s) => s.trim()).filter(Boolean)));
