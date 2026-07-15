@@ -1,4 +1,4 @@
-# Clipper Rust Incremental Cache
+# Incremental Rust builds for GitHub Actions
 
 <!-- PLACEHOLDER(kyle): pitch + measured numbers -->
 
