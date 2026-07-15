@@ -44,6 +44,7 @@ Caches the cargo `target/` directory as a clipper volume and enables incremental
 | `repo` | | Registry repository holding the cache tags |
 | `key` | | Cache key, typically the job name plus architecture |
 | `base-branch` | `main` | Branch whose cache seeds new branches |
+| `additional-split-glob` | `""` | Extra split globs (one per line) on top of the generated cargo set, for repo-specific churny dirs inside `target/` |
 | `version` | `latest` | clipper CLI version to install |
 
 ## Outputs
@@ -62,4 +63,5 @@ This action sets `CARGO_INCREMENTAL=1` and `CARGO_UNSTABLE_CHECKSUM_FRESHNESS=tr
 
 ## Known issues
 
+- sccache cannot be used on jobs with this action: it refuses to run when `CARGO_INCREMENTAL=1` is set (`sccache: incremental compilation is prohibited`). Remove sccache from cached jobs; the incremental cache replaces it.
 - Build scripts are re-run based on file mtimes, which a fresh checkout always invalidates. A build script with `rerun-if-changed` paths, or with no `rerun-if` directives at all, re-runs every workflow run and rebuilds its crate and its dependents. Prefer `rerun-if-env-changed` where possible.
