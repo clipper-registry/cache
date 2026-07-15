@@ -1,18 +1,8 @@
-# clipper cache — Rust preset
+# Rust incremental cache
 
-<!-- PLACEHOLDER(kyle): the incremental-cache story — why transporting
-     cargo's incremental state beats sccache/rust-cache tarballs for this
-     shape of CI, with the measured numbers. -->
+<!-- PLACEHOLDER(kyle): pitch + measured numbers -->
 
-One step that:
-
-1. sets `CARGO_INCREMENTAL=1` and `CARGO_UNSTABLE_CHECKSUM_FRESHNESS=true`
-   (content-hash source freshness — survives fresh-checkout mtimes),
-2. caches `~/.cargo` registry/index/git via `actions/cache` keyed on
-   `Cargo.lock`,
-3. mounts `target/` as a clipper cache volume with the cargo split-glob
-   layout (`.fingerprint`, `incremental`, `.rustc_info.json` isolated into
-   their own blobs), pushing changes back on job success.
+Caches `target/` between CI runs so cargo only rebuilds what actually changed. One step: enables incremental compilation with content-hash freshness, mounts `target/` as a clipper volume, and pushes the changes back when the job succeeds.
 
 ```yaml
 - uses: clipper-registry/cache/rust@main
@@ -23,24 +13,11 @@ One step that:
     key: test-${{ matrix.arch }}
 ```
 
-Tag layout: `key`-`branch` is mounted first, falling back to
-`key`-`base-branch` (default `main`); pushes go to the branch tag.
+Each branch gets its own cache (`<key>-<branch>`), starting from the `base-branch` cache (default `main`) when the branch is new.
 
-## Requirements and sharp edges
+## Requirements
 
-- **Nightly toolchain**: checksum-freshness is nightly-only cargo. On stable
-  the env var is silently ignored and warm runs rebuild every workspace
-  crate (mtime freshness + fresh checkout). If the repo has a
-  `rust-toolchain.toml`, it overrides `rustup default` — set
-  `RUSTUP_TOOLCHAIN` in the job env to win.
-- **Build scripts**: cargo's build-script freshness is mtime-based even under
-  checksum-freshness. A script with no `rerun-if` directives (whole-package
-  mtime scan) or with `rerun-if-changed` paths re-runs on every fresh
-  checkout and rebuilds its crate and dependents. Fixes that work:
-  `rerun-if-env-changed` declarations (value-compared, checkout-proof), or
-  computing what the script computed in a `const fn` and deleting it.
-  <!-- PLACEHOLDER(kyle): link to the build-script writeup / upstream cargo
-       issue once filed. -->
-- **Don't override the project's profile**: this preset adds incremental +
-  checksum freshness and nothing else. LTO/codegen-units belong to the
-  project.
+- **Nightly toolchain.** Content-hash freshness (`-Z checksum-freshness`) is nightly-only cargo; on stable it is silently ignored and every fresh checkout rebuilds the whole workspace. If your repo's `rust-toolchain.toml` pins stable, set `RUSTUP_TOOLCHAIN` in the job env.
+- **Build scripts can defeat the cache.** Cargo re-runs build scripts by mtime, so a script with `rerun-if-changed` paths (or no `rerun-if` directives at all) re-runs on every fresh checkout and rebuilds its crate and everything depending on it. Where possible, declare build script inputs with `rerun-if-env-changed`. <!-- PLACEHOLDER(kyle): link to the build-script writeup / upstream cargo issue once filed. -->
+
+The preset sets `CARGO_INCREMENTAL=1` and `CARGO_UNSTABLE_CHECKSUM_FRESHNESS=true` and nothing else. Your profile settings (LTO, codegen-units, opt-level) are untouched.
