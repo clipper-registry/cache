@@ -1,4 +1,4 @@
-# Clipper Rust incremental cache
+# Clipper Rust Incremental Cache
 
 <!-- PLACEHOLDER(kyle): pitch + measured numbers -->
 
