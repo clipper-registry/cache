@@ -1,10 +1,31 @@
 # clipper cache
 
-An action to cache directories with [Clipper](https://clipper.dev). Directories are FUSE mounted, large files are only fetched when read from.
+An action to cache directories with [Clipper](https://clipper.dev). Directories are FUSE mounted, large files are only fetched when opened.
+
+## Clipper FAQ
+
+### What is Clipper?
+
+Clipper is a container registry with up to 10x faster pulls and 7x faster builds over regular Docker.
+
+As a side effect of implementing faster BuildKit builds, I ended up with a mountable filesystem backed by a remote content defined store.
+
+### Why cache with Clipper?
+
+Tarballing large directories to be stored in the GitHub Actions cache is slow. It's quite easy to go over your workspace limits, and it doesn't scale well with the size of the workspace. There's a tradeoff here: in general caches should be as big as reasonably possible, but it's inefficient to fetch cache that your build isn't using.
+
+### How does Clipper work?
+
+Rather than using tarballs (such as traditional Docker layers and GitHub actions caches do), Clipper indexes filesystems. When a filesystem is pushed to the registry, only files that the registry has never seen before are pushed. 
+
+<!-- TODO: port this mermaid diagram to GH -->
+<img width="857" height="638" alt="image" src="https://github.com/user-attachments/assets/96e14b3f-2394-46c2-a83f-ee846fc0099a" />
 
 ## Usage
 
 **A Clipper account is required to use this action.**
+
+**This action is currently Linux only, support for MacOS and Windows coming soon**
 
 1. Create an account at https://clipper.dev/login
 2. Go to https://clipper.dev/repositories/tokens to generate a token with push, pull, and create scopes.
@@ -39,16 +60,12 @@ An action to cache directories with [Clipper](https://clipper.dev). Directories 
 
 Outputs: `cache-hit`, `resolved-tag`, `push-tag`.
 
-### Credentials
-
-<!-- PLACEHOLDER(kyle): where users get CLIPPER_CREDENTIALS (clipper.dev
-     signup/token flow) and what scope the token needs. -->
-
-Set `CLIPPER_CREDENTIALS` in the step (or job) env from a repository secret.
-
 ## Language specific implementations
 
 ### Rust Incremental Cache
 
 See [`rust/`](rust/)
 
+### ccache
+
+Coming soon!
