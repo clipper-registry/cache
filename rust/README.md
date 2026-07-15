@@ -1,6 +1,7 @@
 # Incremental Rust builds for GitHub Actions
 
-<!-- PLACEHOLDER(kyle): pitch + measured numbers -->
+> [!WARNING]
+> This is mostly a proof of concept. It is faster, but requires a nightly Rust toolchain to use `-Z checksum-freshness`.
 
 Caches the cargo `target/` directory as a clipper volume and enables incremental compilation with content-hash freshness, so warm runs rebuild only what changed. Generally, expect a 30% improvement in compile times over sccache (workflow dependent).
 
@@ -18,9 +19,6 @@ Please see the [main README](../README.md) for more information.
 
 > [!NOTE]
 > Linux runners only for now; macOS and Windows support coming soon.
-
-> [!IMPORTANT]
-> A nightly Rust toolchain is required: `-Z checksum-freshness` is nightly-only cargo.
 
 A Clipper account is required to use this action.
 
