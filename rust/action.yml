@@ -16,10 +16,6 @@ inputs:
     description: Branch whose tags are the warm fallback for other branches.
     required: false
     default: main
-  cargo-registry:
-    description: Also cache ~/.cargo registry/index/git via actions/cache.
-    required: false
-    default: "true"
   version:
     description: Clipper version to install; latest by default.
     required: false
@@ -54,17 +50,6 @@ runs:
         REF="${REF//\//-}"
         echo "key=$KEY-$REF" >> "$GITHUB_OUTPUT"
         echo "restore=$KEY-$BASE" >> "$GITHUB_OUTPUT"
-
-    - name: Cache cargo registry
-      if: inputs.cargo-registry == 'true'
-      uses: actions/cache@v5
-      with:
-        path: |
-          ~/.cargo/registry/index/
-          ~/.cargo/registry/cache/
-          ~/.cargo/git/db/
-        key: cargo-registry-${{ inputs.key }}-${{ hashFiles('**/Cargo.lock') }}
-        restore-keys: cargo-registry-${{ inputs.key }}-
 
     - name: Mount target cache
       id: mount
