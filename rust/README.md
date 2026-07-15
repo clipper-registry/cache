@@ -2,7 +2,15 @@
 
 <!-- PLACEHOLDER(kyle): pitch + measured numbers -->
 
-Caches the cargo `target/` directory as a clipper volume and enables incremental compilation with content-hash freshness, so warm runs rebuild only what changed. Generally, expect an XX% improvement in compile times over sccache (workflow depdendent).
+Caches the cargo `target/` directory as a clipper volume and enables incremental compilation with content-hash freshness, so warm runs rebuild only what changed. Generally, expect a 30% improvement in compile times over sccache (workflow dependent).
+
+Measured on real projects, same workload per row:
+
+| project | job | before | with this action |
+|---|---|---|---|
+| [copper-rs](https://github.com/copper-project/copper-rs) | doctests (vs sccache + rust-cache) | 538s | 374s |
+| [smolvm](https://github.com/smol-machines/smolvm) | build + test (vs actions/cache) | 236s | 106s |
+| [rust-analyzer](https://github.com/rust-lang/rust-analyzer) | build + test (cold vs warm cache) | 1054s | 339s |
 
 Please see the [main README](../README.md) for more information.
 
