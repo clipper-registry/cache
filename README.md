@@ -58,7 +58,7 @@ Rather than using tarballs (such as traditional Docker layers and GitHub actions
 | `jobs` | `16` | parallel transfer jobs |
 | `version` | `latest` | clipper CLI version |
 
-Outputs: `cache-hit`, `resolved-tag`, `push-tag`.
+Outputs: `cache-hit`, `push-tag`.
 
 ## Language specific implementations
 
