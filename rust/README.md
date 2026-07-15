@@ -43,7 +43,7 @@ Caches the cargo `target/` directory as a clipper volume and enables incremental
 |---|---|---|
 | `repo` | | Registry repository holding the cache tags |
 | `key` | | Cache key, typically the job name plus architecture |
-| `base-branch` | `main` | Branch whose cache seeds new branches |
+| `base-branch` | derived | fallback lineage branch (defaults to the PR base branch, else the repository default branch) |
 | `additional-split-glob` | `""` | Extra split globs (one per line) on top of the generated cargo set, for repo-specific churny dirs inside `target/` |
 | `version` | `latest` | clipper CLI version to install |
 
@@ -55,7 +55,7 @@ Caches the cargo `target/` directory as a clipper volume and enables incremental
 
 ## Cache keys
 
-Each branch reads and writes `<key>-<branch>`. A branch with no cache yet starts from `<key>-<base-branch>`. The cache is pushed when the job succeeds; set `CLIPPER_CACHE_ON_FAILURE: "true"` in the job env to also push on failure.
+Each branch reads and writes `<key>-<branch>`. A branch with no cache yet starts from its base branch's cache (the PR base, or the repository default branch). The cache is pushed when the job succeeds; set `CLIPPER_CACHE_ON_FAILURE: "true"` in the job env to also push on failure.
 
 ## Environment variables
 

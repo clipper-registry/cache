@@ -38,12 +38,11 @@ Rather than using tarballs (such as traditional Docker layers and GitHub actions
   with:
     path: build/
     repo: clipper.dev/myorg/mycache
-    key: linux-x86_64-${{ github.head_ref || github.ref_name }}
-    restore-keys: linux-x86_64-main
+    key: linux-x86_64
 ```
 
-- **Mount**: `key` is tried first, then each of `restore-keys`, in order. If nothing resolves, the job runs cold on a plain directory.
-- **Push**: on job success, changes are pushed to `repo:key`. To also push when the job fails, set `CLIPPER_CACHE_ON_FAILURE: "true"` in the job env.
+- **Mount**: the branch is appended to `key` automatically, so `<key>-<branch>` is tried first, then `<key>-<base>` (the PR's base branch, or the repository default branch). If nothing resolves, the job runs cold on a plain directory.
+- **Push**: on job success, changes are pushed to `<key>-<branch>`. To also push when the job fails, set `CLIPPER_CACHE_ON_FAILURE: "true"` in the job env.
 
 ### Inputs
 
@@ -51,8 +50,8 @@ Rather than using tarballs (such as traditional Docker layers and GitHub actions
 |---|---|---|
 | `path` | — | directory to cache |
 | `repo` | — | registry repository for the cache tags |
-| `key` | — | tag to mount first and push to |
-| `restore-keys` | `""` | fallback tags, one per line |
+| `key` | — | cache key prefix; the branch is appended automatically |
+| `base-branch` | derived | fallback lineage branch (defaults to the PR base branch, else the repository default branch) |
 | `split-glob` | `""` | Glob paths to split small file packs on. |
 | `cdc` | `true` | content-defined chunking on push |
 | `jobs` | `16` | parallel transfer jobs |
