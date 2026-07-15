@@ -16,7 +16,7 @@ inputs:
     description: Branch whose tags are the warm fallback for other branches.
     required: false
     default: main
-  split-glob:
+  additional-split-glob:
     description: Extra split globs (one per line) on top of the generated cargo set.
     required: false
     default: ""
@@ -60,7 +60,7 @@ runs:
         repo: ${{ inputs.repo }}
         key: ${{ steps.cfg.outputs.key }}
         restore-keys: ${{ steps.cfg.outputs.restore }}
-        split-glob: ${{ inputs.split-glob }}
+        split-glob: ${{ inputs.additional-split-glob }}
         cdc: "true"
         version: ${{ inputs.version }}
 
