@@ -1,4 +1,4 @@
-# Rust incremental cache
+# Clipper Rust incremental cache
 
 <!-- PLACEHOLDER(kyle): pitch + measured numbers -->
 
@@ -9,6 +9,8 @@ Caches the cargo `target/` directory as a clipper volume and enables incremental
 **A Clipper account is required to use this action.**
 
 **This action is currently Linux only, support for MacOS and Windows coming soon**
+
+**Unstable Rust toolchain is required**
 
 1. Create an account at https://clipper.dev/login
 2. Go to https://clipper.dev/repositories/tokens to generate a token with push, pull, and create scopes.
