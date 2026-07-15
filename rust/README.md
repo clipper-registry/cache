@@ -4,13 +4,13 @@
 
 Caches the cargo `target/` directory as a clipper volume and enables incremental compilation with content-hash freshness, so warm runs rebuild only what changed. Generally, expect a 30% improvement in compile times over sccache (workflow dependent).
 
-Measured on real projects, same workload per row:
+Example improvements (compile time plus cache overhead — mount/restore and push/save — excluding test execution):
 
 | project | job | before | with this action |
 |---|---|---|---|
-| [copper-rs](https://github.com/copper-project/copper-rs) | doctests (vs sccache + rust-cache) | 538s | 374s |
-| [smolvm](https://github.com/smol-machines/smolvm) | build + test (vs actions/cache) | 236s | 106s |
-| [rust-analyzer](https://github.com/rust-lang/rust-analyzer) | build + test (cold vs warm cache) | 1054s | 339s |
+| [copper-rs](https://github.com/copper-project/copper-rs) | doctests (vs sccache + rust-cache) | [465s](https://github.com/copper-project/copper-rs/actions/runs/29280302268) | [309s](https://github.com/clipper-registry/copper-rs/actions/runs/29398481655) |
+| [smolvm](https://github.com/smol-machines/smolvm) | build + clippy + tests (vs actions/cache) | [267s](https://github.com/smol-machines/smolvm/actions/runs/29399762867) | [72s](https://github.com/clipper-registry/smolvm/actions/runs/29382956823) |
+| [rust-analyzer](https://github.com/rust-lang/rust-analyzer) | test suite build (cold vs warm cache) | [917s](https://github.com/clipper-registry/rust-analyzer/actions/runs/29396423702) | [164s](https://github.com/clipper-registry/rust-analyzer/actions/runs/29399195747) |
 
 Please see the [main README](../README.md) for more information.
 
