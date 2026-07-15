@@ -21,6 +21,8 @@ Rather than using tarballs (such as traditional Docker layers and GitHub actions
 ```mermaid
 ---
 title: "Clipper"
+config:
+  themeCSS: ".nodeLabel, .nodeLabel p { text-align: left; }"
 ---
 flowchart LR
   DATA["`**application/vnd.oci.image.layer.toc.v1+json**
