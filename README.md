@@ -16,7 +16,7 @@ Tarballing large directories to be stored in the GitHub Actions cache is slow. I
 
 ### How does Clipper work?
 
-Rather than using tarballs (such as traditional Docker layers and GitHub actions caches do), Clipper indexes filesystems. When a filesystem is pushed to the registry, only files that the registry has never seen before are pushed. 
+Rather than using tarballs (such as traditional Docker layers and GitHub actions caches do), Clipper indexes filesystems. When a filesystem is pushed to the registry, only files that the registry has never seen before are pushed.
 
 <!-- TODO: port this mermaid diagram to GH -->
 <img width="857" height="638" alt="image" src="https://github.com/user-attachments/assets/96e14b3f-2394-46c2-a83f-ee846fc0099a" />
@@ -53,7 +53,7 @@ Rather than using tarballs (such as traditional Docker layers and GitHub actions
 | `repo` | — | registry repository for the cache tags |
 | `key` | — | tag to mount first and push to |
 | `restore-keys` | `""` | fallback tags, one per line |
-| `split-glob` | `""` | churny-subtree globs, one per line |
+| `split-glob` | `""` | Glob paths to split small file packs on. |
 | `cdc` | `true` | content-defined chunking on push |
 | `jobs` | `16` | parallel transfer jobs |
 | `version` | `latest` | clipper CLI version |
