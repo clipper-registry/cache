@@ -69,19 +69,3 @@ This action sets `CARGO_INCREMENTAL=1` and `CARGO_UNSTABLE_CHECKSUM_FRESHNESS=tr
 
 - sccache cannot be used on jobs with this action: it refuses to run when `CARGO_INCREMENTAL=1` is set (`sccache: incremental compilation is prohibited`). Remove sccache from cached jobs; the incremental cache replaces it.
 - Build scripts are re-run based on file mtimes, which a fresh checkout always invalidates. A build script with `rerun-if-changed` paths, or with no `rerun-if` directives at all, re-runs every workflow run and rebuilds its crate and its dependents. Prefer `rerun-if-env-changed` where possible.
-
-## FAQ
-
-### Why doesn't restoring `target/` just work?
-
-Cargo decides what to rebuild by comparing file timestamps. Every CI run starts from a fresh checkout, so every source file looks brand new and cargo rebuilds the whole workspace even when the cache was restored perfectly. This is why most Rust CI caches only really speed up dependency compilation.
-
-### What does this action do differently?
-
-Two things. Cargo's checksum-freshness mode compares file contents instead of timestamps, so a restored cache is trusted for everything that didn't actually change. And the target directory is a mounted Clipper volume rather than a tarball: the incremental compilation state cargo writes is carried between runs, and pushing at the end of the job only uploads what changed.
-
-The result is that a warm run recompiles the crates your commit touched, relinks, and does nothing else.
-
-### What is Clipper?
-
-Clipper is a container registry with up to 10x faster pulls and 7x faster builds over regular Docker. As a side effect of implementing faster BuildKit builds, I ended up with a mountable filesystem backed by a remote content defined store. See the [main README](../README.md) for how it works.
