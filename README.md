@@ -12,11 +12,11 @@ As a side effect of implementing faster BuildKit builds, I ended up with a mount
 
 ### Why cache with Clipper?
 
-Tarballing large directories to be stored in the GitHub Actions cache is slow. It's quite easy to go over your workspace limits, and it doesn't scale well with the size of the workspace. There's a tradeoff here: in general caches should be as big as reasonably possible, but it's inefficient to fetch cache that your build isn't using.
+Tarballing large directories to be stored in the GitHub Actions cache is slow. It's quite easy to go over your workspace limits, and it doesn't scale well with the size of the workspace. There's a tradeoff here: in general caches should be as big as reasonably possible, but it's inefficient to fetch cache that your build isn't using. 
 
 ### How does Clipper work?
 
-Rather than using tarballs (such as traditional Docker layers and GitHub actions caches do), Clipper indexes filesystems. When a filesystem is pushed to the registry, only files that the registry has never seen before are pushed.
+Rather than using tarballs (such as traditional Docker layers and GitHub actions caches do), Clipper indexes filesystems. When a filesystem is pushed to the registry, only files that the registry has never seen before are pushed. (Additionally, this allows for sharing content between different caches!)
 
 <!-- TODO: port this mermaid diagram to GH -->
 <img width="857" height="638" alt="image" src="https://github.com/user-attachments/assets/96e14b3f-2394-46c2-a83f-ee846fc0099a" />
