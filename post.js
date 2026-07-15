@@ -5,12 +5,7 @@ const { spawnSync } = require("node:child_process");
 
 const state = (name) => process.env[`STATE_${name}`] ?? "";
 
-function run(args) {
-  const res = spawnSync("clipper", args, { encoding: "utf8" });
-  process.stdout.write(res.stdout ?? "");
-  process.stderr.write(res.stderr ?? "");
-  return res;
-}
+const run = (args) => spawnSync("clipper", args, { stdio: "inherit" });
 
 function main() {
   const cachePath = state("CACHE_PATH");
@@ -38,19 +33,8 @@ function main() {
   if (state("CDC") !== "false") args.push("--cdc");
 
   const res = run(args);
-  if (res.status !== 0) {
-    // A job that never wrote into the volume produces an empty upper; clipper
-    // refuses to clobber the tag with an empty volume, and that is a skip
-    // here, not a failure.
-    if (`${res.stdout}\n${res.stderr}`.includes("refusing to push an empty volume")) {
-      console.log("volume unchanged and empty; skipping push");
-    } else {
-      run(["volume", "unmount", cachePath]);
-      process.exit(res.status ?? 1);
-    }
-  }
-
   run(["volume", "unmount", cachePath]);
+  if (res.status !== 0) process.exit(res.status ?? 1);
 }
 
 main();

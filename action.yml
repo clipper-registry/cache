@@ -43,8 +43,6 @@ inputs:
 outputs:
   cache-hit:
     description: Whether any tag mounted (false means cold start on a plain directory).
-  resolved-tag:
-    description: The tag that actually mounted, when cache-hit is true.
   push-tag:
     description: The tag the post step pushes to (repo:key).
 
