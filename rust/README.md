@@ -82,14 +82,6 @@ Two things. Cargo's checksum-freshness mode compares file contents instead of ti
 
 The result is that a warm run recompiles the crates your commit touched, relinks, and does nothing else.
 
-### What does the action do, step by step?
-
-1. Installs the clipper CLI.
-2. Sets `CARGO_INCREMENTAL=1` and `CARGO_UNSTABLE_CHECKSUM_FRESHNESS=true` for the rest of the job.
-3. Mounts your cache volume at `target/`: `<key>-<branch>` is tried first, then `<key>-<base branch>`. A cold start just leaves an empty directory. Files are fetched lazily as the build reads them.
-4. Your build runs, reading and writing `target/` as normal.
-5. When the job succeeds, a post step pushes the changes to `<key>-<branch>` (only content the registry has never seen uploads) and unmounts.
-
 ### What is Clipper?
 
 Clipper is a container registry with up to 10x faster pulls and 7x faster builds over regular Docker. As a side effect of implementing faster BuildKit builds, I ended up with a mountable filesystem backed by a remote content defined store. See the [main README](../README.md) for how it works.
