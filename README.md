@@ -18,8 +18,33 @@ Tarballing large directories to be stored in the GitHub Actions cache is slow. I
 
 Rather than using tarballs (such as traditional Docker layers and GitHub actions caches do), Clipper indexes filesystems. When a filesystem is pushed to the registry, only files that the registry has never seen before are pushed. (Additionally, this allows for sharing content between different caches!)
 
-<!-- TODO: port this mermaid diagram to GH -->
-<img width="857" height="638" alt="image" src="https://github.com/user-attachments/assets/96e14b3f-2394-46c2-a83f-ee846fc0099a" />
+```mermaid
+---
+title: "Clipper"
+---
+flowchart LR
+  DATA["`**application/vnd.oci.image.layer.toc.v1+json**
+{
+  &quot;version&quot;: 1,
+  &quot;entries&quot;: [
+    { &quot;type&quot;: &quot;reg&quot;, &quot;name&quot;: &quot;libtorch_cuda.so&quot;, &quot;size&quot;: 580553696, &quot;modtime&quot;: &quot;2026-06-29T22:08:57Z&quot;, &quot;digest&quot;: &quot;sha256:9f2c1a…&quot; },
+    { &quot;type&quot;: &quot;reg&quot;, &quot;name&quot;: &quot;libcublas.so.12&quot;, &quot;size&quot;: 561997520, &quot;modtime&quot;: &quot;2026-06-29T22:08:58Z&quot;, &quot;digest&quot;: &quot;sha256:c3d4b8…&quot; },
+    { &quot;type&quot;: &quot;reg&quot;, &quot;name&quot;: &quot;libnccl.so.2&quot;, &quot;size&quot;: 406431312, &quot;modtime&quot;: &quot;2026-06-29T22:08:59Z&quot;, &quot;digest&quot;: &quot;sha256:e5f6a2…&quot; }
+  ]
+}`"]
+  C2["`**application/vnd.clipper.image.layer.chunk.v1**
+sha256:9f2c1a…
+580553696 bytes`"]
+  C3["`**application/vnd.clipper.image.layer.chunk.v1**
+sha256:c3d4b8…
+561997520 bytes`"]
+  C4["`**application/vnd.clipper.image.layer.chunk.v1**
+sha256:e5f6a2…
+406431312 bytes`"]
+  DATA -.-> C2
+  DATA -.-> C3
+  DATA -.-> C4
+```
 
 ## Usage
 
