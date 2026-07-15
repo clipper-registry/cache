@@ -49,7 +49,7 @@ outputs:
     description: The tag the post step pushes to (repo:key).
 
 runs:
-  using: node20
+  using: node24
   main: main.js
   post: post.js
   # actions/cache semantics: save only when the job succeeded. Set
