@@ -1,32 +1,28 @@
 # clipper cache
 
-<!-- PLACEHOLDER(kyle): one-paragraph pitch — what clipper volumes are, why
-     chunk-level dedup beats tarball caches, link to clipper.dev docs. -->
-
-Registry-backed cache volumes for GitHub Actions: mount a cached directory at
-job start, push only the changed chunks back at job end.
+An action to cache directories with [Clipper](https://clipper.dev). Directories are FUSE mounted, large files are only fetched when read from.
 
 ## Usage
 
+**A Clipper account is required to use this action.**
+
+1. Create an account at https://clipper.dev/login
+2. Go to https://clipper.dev/repositories/tokens to generate a token with push, pull, and create scopes.
+3. Add the token to your repo or org
+4. Add the action to your workflow, like so:
 ```yaml
 - uses: clipper-registry/cache@main
   env:
     CLIPPER_CREDENTIALS: ${{ secrets.CLIPPER_CI_CREDENTIALS }}
   with:
     path: build/
-    repo: clipper.dev/myorg/ci-cache
+    repo: clipper.dev/myorg/mycache
     key: linux-x86_64-${{ github.head_ref || github.ref_name }}
     restore-keys: linux-x86_64-main
 ```
 
-- **Mount**: `key` is tried first, then each of `restore-keys`, in order. If
-  nothing resolves, the job runs cold on a plain directory.
-- **Push**: on job success, changes are pushed to `repo:key` (chunk-level
-  dedup: a warm push uploads only what changed). To also push when the job
-  fails, set `CLIPPER_CACHE_ON_FAILURE: "true"` in the job env — same shape
-  as `actions/cache`'s save-on-success default.
-- `split-glob` (one glob per line) isolates churny subtrees into their own
-  blobs; `cdc` enables content-defined chunking (default on).
+- **Mount**: `key` is tried first, then each of `restore-keys`, in order. If nothing resolves, the job runs cold on a plain directory.
+- **Push**: on job success, changes are pushed to `repo:key`. To also push when the job fails, set `CLIPPER_CACHE_ON_FAILURE: "true"` in the job env.
 
 ### Inputs
 
@@ -50,38 +46,9 @@ Outputs: `cache-hit`, `resolved-tag`, `push-tag`.
 
 Set `CLIPPER_CREDENTIALS` in the step (or job) env from a repository secret.
 
-## Rust preset
+## Language specific implementations
 
-See [`rust/`](rust/) — one step that mounts `target/` as a cache volume,
-enables incremental compilation with content-hash freshness, applies the
-cargo split-glob layout, and caches the cargo registry:
+### Rust Incremental Cache
 
-```yaml
-- uses: clipper-registry/cache/rust@main
-  env:
-    CLIPPER_CREDENTIALS: ${{ secrets.CLIPPER_CI_CREDENTIALS }}
-  with:
-    repo: clipper.dev/myorg/ci-cache
-    key: test-x86_64
-    targets: |
-      x86_64-unknown-linux-musl
-```
+See [`rust/`](rust/)
 
-**Toolchain requirement**: `CARGO_UNSTABLE_CHECKSUM_FRESHNESS` needs a nightly
-toolchain; on stable it is silently ignored and freshness falls back to
-mtimes, which a fresh checkout always invalidates. Beware `rust-toolchain.toml`
-silently overriding your CI toolchain — set `RUSTUP_TOOLCHAIN` in the job env
-if the repo pins one.
-
-<!-- PLACEHOLDER(kyle): benchmark numbers — smolvm/rust-analyzer/copper before
-     and after (warm job times, push sizes), and the build-script caveats
-     writeup or a link to it. -->
-
-## Caveats
-
-- The post step (push + unmount) is skipped on job failure by default, like
-  `actions/cache`; on self-hosted runners that leaves the FUSE mount behind —
-  set `CLIPPER_CACHE_ON_FAILURE: "true"` or unmount in your own cleanup.
-- Build scripts with no `rerun-if` directives (or path-based ones) re-run on
-  every fresh checkout and dirty their crates regardless of this cache; see
-  the Rust preset README for the fix patterns.
