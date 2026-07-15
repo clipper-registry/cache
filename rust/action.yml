@@ -25,9 +25,6 @@ outputs:
   cache-hit:
     description: Whether a cache tag mounted.
     value: ${{ steps.mount.outputs.cache-hit }}
-  resolved-tag:
-    description: The tag that mounted, when cache-hit is true.
-    value: ${{ steps.mount.outputs.resolved-tag }}
 
 runs:
   using: composite

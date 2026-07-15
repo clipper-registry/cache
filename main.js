@@ -1,7 +1,7 @@
 // Clipper cache: main step. Installs the pinned clipper CLI, mounts the cache
 // volume with tag fallback, and records state for the post step (push +
 // unmount). Dependency-free: inputs/outputs/state via the runner's files.
-const { execFileSync, spawnSync } = require("node:child_process");
+const { execFileSync } = require("node:child_process");
 const fs = require("node:fs");
 const os = require("node:os");
 
@@ -44,18 +44,12 @@ function main() {
 
   const tags = [key, ...restoreKeys].map((k) => `${repo}:${k}`);
   fs.mkdirSync(path, { recursive: true });
-  // Capture output to recover which tag resolved, but replay it to the log.
-  const res = spawnSync("clipper", ["volume", "mount", path, "-j", jobs, ...tags], {
-    encoding: "utf8",
-  });
-  process.stdout.write(res.stdout ?? "");
-  process.stderr.write(res.stderr ?? "");
-  if (res.status === 0) {
-    const m = `${res.stdout}\n${res.stderr}`.match(/mounted (\S+) at /);
+  try {
+    execFileSync("clipper", ["volume", "mount", path, "-j", jobs, ...tags], {
+      stdio: "inherit",
+    });
     output("cache-hit", "true");
-    if (m) output("resolved-tag", m[1]);
-    console.log(`mounted cache (fallback order: ${tags.join(", ")})`);
-  } else {
+  } catch {
     // No tag exists yet: cold start on a plain directory; the post push
     // seeds repo:key so the next run mounts warm.
     output("cache-hit", "false");
