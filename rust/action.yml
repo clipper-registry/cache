@@ -13,9 +13,11 @@ inputs:
     description: Cache lineage key, typically job name plus arch (branch fallback is handled here).
     required: true
   base-branch:
-    description: Branch whose tags are the warm fallback for other branches.
+    description: >
+      Fallback lineage branch. Defaults to the pull request's base branch,
+      else the repository's default branch.
     required: false
-    default: main
+    default: ""
   additional-split-glob:
     description: Extra split globs (one per line) on top of the generated cargo set.
     required: false
@@ -39,27 +41,14 @@ runs:
         echo "CARGO_INCREMENTAL=1" >> "$GITHUB_ENV"
         echo "CARGO_UNSTABLE_CHECKSUM_FRESHNESS=true" >> "$GITHUB_ENV"
 
-    - name: Compute cache keys
-      id: cfg
-      shell: bash
-      env:
-        KEY: ${{ inputs.key }}
-        BASE: ${{ inputs.base-branch }}
-      run: |
-        set -euo pipefail
-        REF="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
-        REF="${REF//\//-}"
-        echo "key=$KEY-$REF" >> "$GITHUB_OUTPUT"
-        echo "restore=$KEY-$BASE" >> "$GITHUB_OUTPUT"
-
     - name: Mount target cache
       id: mount
       uses: clipper-registry/cache@main
       with:
         path: target
         repo: ${{ inputs.repo }}
-        key: ${{ steps.cfg.outputs.key }}
-        restore-keys: ${{ steps.cfg.outputs.restore }}
+        key: ${{ inputs.key }}
+        base-branch: ${{ inputs.base-branch }}
         split-glob: ${{ inputs.additional-split-glob }}
         cdc: "true"
         version: ${{ inputs.version }}

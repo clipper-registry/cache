@@ -15,10 +15,15 @@ inputs:
     description: Registry repository holding the cache tags (e.g. clipper.dev/org/ci-cache).
     required: true
   key:
-    description: Tag to mount first and to push to (e.g. linux-x86_64-mybranch).
+    description: >
+      Cache key prefix; the sanitized branch is appended. Mounts
+      <key>-<branch> first, falls back to <key>-<base branch>, and pushes to
+      <key>-<branch>.
     required: true
-  restore-keys:
-    description: Fallback tags to mount when key is absent, one per line, in order.
+  base-branch:
+    description: >
+      Fallback lineage branch. Defaults to the pull request's base branch,
+      else the repository's default branch.
     required: false
     default: ""
   split-glob:
