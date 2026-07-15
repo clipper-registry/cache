@@ -6,11 +6,13 @@ Caches the cargo `target/` directory as a clipper volume and enables incremental
 
 ## Usage
 
-**A Clipper account is required to use this action.**
+> [!NOTE]
+> Linux runners only for now; macOS and Windows support coming soon.
 
-**This action is currently Linux only, support for MacOS and Windows coming soon**
+> [!IMPORTANT]
+> A nightly Rust toolchain is required: `-Z checksum-freshness` is nightly-only cargo.
 
-**Unstable Rust toolchain is required**
+A Clipper account is required to use this action.
 
 1. Create an account at https://clipper.dev/login
 2. Go to https://clipper.dev/repositories/tokens to generate a token with push, pull, and create scopes.
