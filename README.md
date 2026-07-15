@@ -22,7 +22,7 @@ Rather than using tarballs (such as traditional Docker layers and GitHub actions
 ---
 title: "Clipper"
 config:
-  themeCSS: ".nodeLabel, .nodeLabel p { text-align: left; }"
+  themeCSS: ".nodeLabel, .nodeLabel p { text-align: left; white-space: pre-wrap; }"
 ---
 flowchart LR
   DATA["`**application/vnd.oci.image.layer.toc.v1+json**
