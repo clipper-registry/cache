@@ -1,0 +1,58 @@
+name: Clipper cache
+description: >
+  Registry-backed cache volumes: lazily mount a clipper volume at a path on
+  job start, push the changes back on job success. Chunk-level dedup means a
+  warm push uploads only what changed.
+branding:
+  icon: archive
+  color: blue
+
+inputs:
+  path:
+    description: Directory to cache (mounted as a clipper volume).
+    required: true
+  repo:
+    description: Registry repository holding the cache tags (e.g. clipper.dev/org/ci-cache).
+    required: true
+  key:
+    description: Tag to mount first and to push to (e.g. linux-x86_64-mybranch).
+    required: true
+  restore-keys:
+    description: Fallback tags to mount when key is absent, one per line, in order.
+    required: false
+    default: ""
+  split-glob:
+    description: >
+      Glob prefixes pushed as their own tar blobs (one per line), isolating
+      churny subtrees so a warm push re-uploads KBs instead of whole blobs.
+    required: false
+    default: ""
+  cdc:
+    description: Content-defined chunking on push.
+    required: false
+    default: "true"
+  jobs:
+    description: Parallel transfer jobs for mount and push.
+    required: false
+    default: "16"
+  version:
+    description: Clipper version to install (e.g. v0.28.0); latest by default.
+    required: false
+    default: latest
+
+outputs:
+  cache-hit:
+    description: Whether any tag mounted (false means cold start on a plain directory).
+  resolved-tag:
+    description: The tag that actually mounted, when cache-hit is true.
+  push-tag:
+    description: The tag the post step pushes to (repo:key).
+
+runs:
+  using: node20
+  main: main.js
+  post: post.js
+  # actions/cache semantics: save only when the job succeeded. Set
+  # CLIPPER_CACHE_ON_FAILURE=true in the job env to also push (and unmount)
+  # on failure -- compile artifacts from a failed test run are still valid.
+  post-if: success() || env.CLIPPER_CACHE_ON_FAILURE == 'true'

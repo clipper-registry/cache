@@ -1,0 +1,100 @@
+name: Clipper Rust cache
+description: >
+  Incremental cargo cache on clipper volumes: mounts the target dir as a
+  cache volume, turns on incremental compilation with content-hash
+  freshness, and (optionally) caches the cargo registry. Requires a nightly
+  toolchain for checksum-freshness; see the README.
+
+inputs:
+  repo:
+    description: Registry repository holding the cache tags (e.g. clipper.dev/org/ci-cache).
+    required: true
+  key:
+    description: Cache lineage key, typically job name plus arch (branch fallback is handled here).
+    required: true
+  base-branch:
+    description: Branch whose tags are the warm fallback for other branches.
+    required: false
+    default: main
+  cargo-registry:
+    description: Also cache ~/.cargo registry/index/git via actions/cache.
+    required: false
+    default: "true"
+  version:
+    description: Clipper version to install; latest by default.
+    required: false
+    default: latest
+
+outputs:
+  cache-hit:
+    description: Whether a cache tag mounted.
+    value: ${{ steps.mount.outputs.cache-hit }}
+  resolved-tag:
+    description: The tag that mounted, when cache-hit is true.
+    value: ${{ steps.mount.outputs.resolved-tag }}
+
+runs:
+  using: composite
+  steps:
+    - name: Cargo cache-friendly env
+      shell: bash
+      run: |
+        echo "CARGO_INCREMENTAL=1" >> "$GITHUB_ENV"
+        echo "CARGO_UNSTABLE_CHECKSUM_FRESHNESS=true" >> "$GITHUB_ENV"
+
+    - name: Compute cache keys
+      id: cfg
+      shell: bash
+      env:
+        KEY: ${{ inputs.key }}
+        BASE: ${{ inputs.base-branch }}
+      run: |
+        set -euo pipefail
+        REF="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
+        REF="${REF//\//-}"
+        echo "key=$KEY-$REF" >> "$GITHUB_OUTPUT"
+        echo "restore=$KEY-$BASE" >> "$GITHUB_OUTPUT"
+
+    - name: Cache cargo registry
+      if: inputs.cargo-registry == 'true'
+      uses: actions/cache@v5
+      with:
+        path: |
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+        key: cargo-registry-${{ inputs.key }}-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: cargo-registry-${{ inputs.key }}-
+
+    - name: Mount target cache
+      id: mount
+      uses: clipper-registry/cache@main
+      with:
+        path: target
+        repo: ${{ inputs.repo }}
+        key: ${{ steps.cfg.outputs.key }}
+        restore-keys: ${{ steps.cfg.outputs.restore }}
+        cdc: "true"
+        version: ${{ inputs.version }}
+
+    - name: Compute split globs from the mounted layout
+      shell: bash
+      # Cargo makes one target/ subdir per --target triple, unknowable before
+      # the build; on a warm mount the previous run's layout is already
+      # visible, so the churny-dir globs are generated from it here (a cold
+      # first run gets only the top-level profile globs and self-heals on the
+      # next run). The push step picks these up via CLIPPER_CACHE_SPLIT_GLOB.
+      run: |
+        set -euo pipefail
+        {
+          echo 'CLIPPER_CACHE_SPLIT_GLOB<<CLIPPER_GLOBS'
+          echo '.rustc_info.json'
+          for prefix in "" $(find target -mindepth 1 -maxdepth 1 -type d \
+              ! -name release ! -name debug -printf '%f/\n' 2>/dev/null); do
+            for profile in release debug; do
+              echo "${prefix}${profile}/.fingerprint/**"
+              echo "${prefix}${profile}/incremental/**"
+            done
+          done
+          echo 'CLIPPER_GLOBS'
+        } >> "$GITHUB_ENV"
