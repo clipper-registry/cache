@@ -1,12 +1,18 @@
 # clipper cache
 
-<!-- PLACEHOLDER(kyle): one-paragraph pitch — what clipper volumes are, why
-     chunk-level dedup beats tarball caches, link to clipper.dev docs. -->
-
-Registry-backed cache volumes for GitHub Actions: mount a cached directory at
-job start, push only the changed chunks back at job end.
+An action to cache directories with [Clipper](https://clipper.dev). Directories are FUSE mounted, large files are only fetched when opened.
 
 ## Usage
+
+> [!NOTE]
+> Linux runners only for now; macOS and Windows support coming soon.
+
+A Clipper account is required to use this action.
+
+1. Create an account at https://clipper.dev/login
+2. Go to https://clipper.dev/repositories/tokens to generate a token with push, pull, and create scopes.
+3. Add the token to your repo or org
+4. Add the action to your workflow, like so:
 
 ```yaml
 - uses: clipper-registry/cache@main
@@ -14,19 +20,12 @@ job start, push only the changed chunks back at job end.
     CLIPPER_CREDENTIALS: ${{ secrets.CLIPPER_CI_CREDENTIALS }}
   with:
     path: build/
-    repo: clipper.dev/myorg/ci-cache
-    key: linux-x86_64-${{ github.head_ref || github.ref_name }}
-    restore-keys: linux-x86_64-main
+    repo: clipper.dev/myorg/mycache
+    key: linux-x86_64
 ```
 
-- **Mount**: `key` is tried first, then each of `restore-keys`, in order. If
-  nothing resolves, the job runs cold on a plain directory.
-- **Push**: on job success, changes are pushed to `repo:key` (chunk-level
-  dedup: a warm push uploads only what changed). To also push when the job
-  fails, set `CLIPPER_CACHE_ON_FAILURE: "true"` in the job env — same shape
-  as `actions/cache`'s save-on-success default.
-- `split-glob` (one glob per line) isolates churny subtrees into their own
-  blobs; `cdc` enables content-defined chunking (default on).
+- **Mount**: the branch is appended to `key` automatically, so `<key>-<branch>` is tried first, then `<key>-<base>` (the PR's base branch, or the repository default branch). If nothing resolves, the job runs cold on a plain directory.
+- **Push**: on job success, changes are pushed to `<key>-<branch>`. To also push when the job fails, set `CLIPPER_CACHE_ON_FAILURE: "true"` in the job env.
 
 ### Inputs
 
@@ -34,54 +33,67 @@ job start, push only the changed chunks back at job end.
 |---|---|---|
 | `path` | — | directory to cache |
 | `repo` | — | registry repository for the cache tags |
-| `key` | — | tag to mount first and push to |
-| `restore-keys` | `""` | fallback tags, one per line |
-| `split-glob` | `""` | churny-subtree globs, one per line |
+| `key` | — | cache key prefix; the branch is appended automatically |
+| `base-branch` | derived | fallback lineage branch (defaults to the PR base branch, else the repository default branch) |
+| `split-glob` | `""` | Glob paths to split small file packs on. |
 | `cdc` | `true` | content-defined chunking on push |
 | `jobs` | `16` | parallel transfer jobs |
 | `version` | `latest` | clipper CLI version |
 
-Outputs: `cache-hit`, `resolved-tag`, `push-tag`.
+Outputs: `cache-hit`, `push-tag`.
 
-### Credentials
+## Language specific implementations
 
-<!-- PLACEHOLDER(kyle): where users get CLIPPER_CREDENTIALS (clipper.dev
-     signup/token flow) and what scope the token needs. -->
+### Rust Incremental Cache
 
-Set `CLIPPER_CREDENTIALS` in the step (or job) env from a repository secret.
+See [`rust/`](rust/)
 
-## Rust preset
+### ccache
 
-See [`rust/`](rust/) — one step that mounts `target/` as a cache volume,
-enables incremental compilation with content-hash freshness, applies the
-cargo split-glob layout, and caches the cargo registry:
+Coming soon!
 
-```yaml
-- uses: clipper-registry/cache/rust@main
-  env:
-    CLIPPER_CREDENTIALS: ${{ secrets.CLIPPER_CI_CREDENTIALS }}
-  with:
-    repo: clipper.dev/myorg/ci-cache
-    key: test-x86_64
-    targets: |
-      x86_64-unknown-linux-musl
+## Clipper FAQ
+
+### What is Clipper?
+
+Clipper is a container registry with up to 10x faster pulls and 7x faster builds over regular Docker.
+
+As a side effect of implementing faster BuildKit builds, I ended up with a mountable filesystem backed by a remote content defined store.
+
+### Why cache with Clipper?
+
+Tarballing large directories to be stored in the GitHub Actions cache is slow. It's quite easy to go over your workspace limits, and it doesn't scale well with the size of the workspace. There's a tradeoff here: in general caches should be as big as reasonably possible, but it's inefficient to fetch cache that your build isn't using. 
+
+### How does Clipper work?
+
+Rather than using tarballs (such as traditional Docker layers and GitHub actions caches do), Clipper indexes filesystems. When a filesystem is pushed to the registry, only files that the registry has never seen before are pushed. (Additionally, this allows for sharing content between different caches!)
+
+```mermaid
+---
+title: "Clipper"
+config:
+  themeCSS: ".nodeLabel, .nodeLabel p { text-align: left; }"
+---
+flowchart LR
+  DATA["`**application/vnd.oci.image.layer.toc.v1+json**
+{
+&nbsp;&nbsp;&quot;version&quot;: 1,
+&nbsp;&nbsp;&quot;entries&quot;: [
+&nbsp;&nbsp;&nbsp;&nbsp;{ &quot;type&quot;: &quot;reg&quot;, &quot;name&quot;: &quot;libtorch_cuda.so&quot;, &quot;size&quot;: 580553696, &quot;modtime&quot;: &quot;2026-06-29T22:08:57Z&quot;, &quot;digest&quot;: &quot;sha256:9f2c1a…&quot; },
+&nbsp;&nbsp;&nbsp;&nbsp;{ &quot;type&quot;: &quot;reg&quot;, &quot;name&quot;: &quot;libcublas.so.12&quot;, &quot;size&quot;: 561997520, &quot;modtime&quot;: &quot;2026-06-29T22:08:58Z&quot;, &quot;digest&quot;: &quot;sha256:c3d4b8…&quot; },
+&nbsp;&nbsp;&nbsp;&nbsp;{ &quot;type&quot;: &quot;reg&quot;, &quot;name&quot;: &quot;libnccl.so.2&quot;, &quot;size&quot;: 406431312, &quot;modtime&quot;: &quot;2026-06-29T22:08:59Z&quot;, &quot;digest&quot;: &quot;sha256:e5f6a2…&quot; }
+&nbsp;&nbsp;]
+}`"]
+  C2["`**application/vnd.clipper.image.layer.chunk.v1**
+sha256:9f2c1a…
+580553696 bytes`"]
+  C3["`**application/vnd.clipper.image.layer.chunk.v1**
+sha256:c3d4b8…
+561997520 bytes`"]
+  C4["`**application/vnd.clipper.image.layer.chunk.v1**
+sha256:e5f6a2…
+406431312 bytes`"]
+  DATA -.-> C2
+  DATA -.-> C3
+  DATA -.-> C4
 ```
-
-**Toolchain requirement**: `CARGO_UNSTABLE_CHECKSUM_FRESHNESS` needs a nightly
-toolchain; on stable it is silently ignored and freshness falls back to
-mtimes, which a fresh checkout always invalidates. Beware `rust-toolchain.toml`
-silently overriding your CI toolchain — set `RUSTUP_TOOLCHAIN` in the job env
-if the repo pins one.
-
-<!-- PLACEHOLDER(kyle): benchmark numbers — smolvm/rust-analyzer/copper before
-     and after (warm job times, push sizes), and the build-script caveats
-     writeup or a link to it. -->
-
-## Caveats
-
-- The post step (push + unmount) is skipped on job failure by default, like
-  `actions/cache`; on self-hosted runners that leaves the FUSE mount behind —
-  set `CLIPPER_CACHE_ON_FAILURE: "true"` or unmount in your own cleanup.
-- Build scripts with no `rerun-if` directives (or path-based ones) re-run on
-  every fresh checkout and dirty their crates regardless of this cache; see
-  the Rust preset README for the fix patterns.
